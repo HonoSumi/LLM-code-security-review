@@ -1,6 +1,6 @@
-name: 'Claude Code Security Reviewer'
-description: 'AI-powered security review GitHub Action using Claude to analyze code changes for security vulnerabilities'
-author: 'Anthropic'
+name: 'LLM Code Security Reviewer'
+description: 'AI-powered security review GitHub Action using LLM to analyze code changes for security vulnerabilities'
+author: 'HonoSumi'
 
 inputs:
   comment-pr:
@@ -18,23 +18,23 @@ inputs:
     required: false
     default: ''
 
-  claudecode-timeout:
-    description: 'Timeout for ClaudeCode analysis in minutes'
+  LLMcode-timeout:
+    description: 'Timeout for LLM analysis in minutes'
     required: false
     default: '20'
   
-  claude-api-key:
-    description: 'Anthropic Claude API key for security analysis'
+  LLM-api-key:
+    description: 'LLM API key for security analysis'
     required: true
     default: ''
 
-  claude-model:
-    description: 'Claude model to use for security analysis (e.g., claude-3-sonnet-20240229)'
+  LLM-model:
+    description: 'LLM model to use for security analysis (e.g., deepseek-chat)'
     required: false
     default: ''
 
   run-every-commit:
-    description: 'Run ClaudeCode on every commit (skips cache check). Warning: This may lead to more false positives on PRs with many commits as the AI analyzes the same code multiple times.'
+    description: 'Run LLM on every commit (skips cache check). Warning: This may lead to more false positives on PRs with many commits as the AI analyzes the same code multiple times.'
     required: false
     default: 'false'
 
@@ -51,11 +51,11 @@ inputs:
 outputs:
   findings-count:
     description: 'Number of security findings'
-    value: ${{ steps.claudecode-scan.outputs.findings_count }}
+    value: ${{ steps.LLMcode-scan.outputs.findings_count }}
   
   results-file:
     description: 'Path to the results JSON file'
-    value: ${{ steps.claudecode-scan.outputs.results_file }}
+    value: ${{ steps.LLMcode-scan.outputs.results_file }}
 
 runs:
   using: 'composite'
@@ -73,57 +73,47 @@ runs:
       with:
         python-version: '3.x'
     
-    - name: Check ClaudeCode run history
-      id: claudecode-history
-      if: github.event_name == 'pull_request'
-      uses: actions/cache@v4
-      with:
-        path: .claudecode-marker
-        key: claudecode-${{ github.repository_id }}-pr-${{ github.event.pull_request.number }}-${{ github.sha }}
-        restore-keys: |
-          claudecode-${{ github.repository_id }}-pr-${{ github.event.pull_request.number }}-
     
-    - name: Determine ClaudeCode enablement
-      id: claudecode-check
+    - name: Determine LLM enablement
+      id: LLMcode-check
       shell: bash
       run: |
-        # Check if ClaudeCode should be enabled
-        ENABLE_CLAUDECODE="true"
-        SILENCE_CLAUDECODE_COMMENTS="false"
+        # Check if LLM should be enabled
+        ENABLE_LLMCODE="true"
+        SILENCE_LLMCODE_COMMENTS="false"
         
         # For PRs, check sampling and cache
         if [ "${{ github.event_name }}" == "pull_request" ]; then
           PR_NUMBER="${{ github.event.pull_request.number }}"
-          CACHE_HIT="${{ steps.claudecode-history.outputs.cache-hit }}"
 
-          # Now check cache - if ClaudeCode has already run, disable unless run-every-commit is true
+          # Now check cache - if LLMCode has already run, disable unless run-every-commit is true
           # Check if marker file exists (cache may have been restored from a different SHA)
-          if [ "${{ inputs.run-every-commit }}" != "true" ] && [ -f ".claudecode-marker/marker.json" ]; then
-            echo "ClaudeCode has already run on PR #$PR_NUMBER (found marker file), forcing disable to avoid false positives"
-            ENABLE_CLAUDECODE="false"
-          elif [ "${{ inputs.run-every-commit }}" == "true" ] && [ -f ".claudecode-marker/marker.json" ]; then
-            echo "ClaudeCode has already run on PR #$PR_NUMBER but run-every-commit is enabled, running again"
-          elif [ "$ENABLE_CLAUDECODE" == "true" ]; then
-            echo "ClaudeCode will run for PR #$PR_NUMBER (first run)"
+          if [ "${{ inputs.run-every-commit }}" != "true" ] && [ -f ".LLMcode-marker/marker.json" ]; then
+            echo "LLM has already run on PR #$PR_NUMBER (found marker file), forcing disable to avoid false positives"
+            ENABLE_LLMCODE="false"
+          elif [ "${{ inputs.run-every-commit }}" == "true" ] && [ -f ".LLMcode-marker/marker.json" ]; then
+            echo "LLM has already run on PR #$PR_NUMBER but run-every-commit is enabled, running again"
+          elif [ "$ENABLE_LLMCODE" == "true" ]; then
+            echo "LLM will run for PR #$PR_NUMBER (first run)"
           fi
         fi
         
-        echo "enable_claudecode=$ENABLE_CLAUDECODE" >> $GITHUB_OUTPUT
-        echo "silence_claudecode_comments=$SILENCE_CLAUDECODE_COMMENTS" >> $GITHUB_OUTPUT
+        echo "enable_LLMcode=$ENABLE_LLMCODE" >> $GITHUB_OUTPUT
+        echo "silence_LLMcode_comments=$SILENCE_LLMCODE_COMMENTS" >> $GITHUB_OUTPUT
         
-        if [ "$ENABLE_CLAUDECODE" == "true" ]; then
-          echo "ClaudeCode is enabled for this run"
+        if [ "$ENABLE_LLMCODE" == "true" ]; then
+          echo "LLM is enabled for this run"
         else
-          echo "ClaudeCode is disabled for this run"
+          echo "LLM is disabled for this run"
         fi
     
-    - name: Reserve ClaudeCode slot to prevent race conditions
-      if: steps.claudecode-check.outputs.enable_claudecode == 'true' && github.event_name == 'pull_request'
+    - name: Reserve LLMcode slot to prevent race conditions
+      if: steps.LLMcode-check.outputs.enable_LLMcode == 'true' && github.event_name == 'pull_request'
       shell: bash
       run: |
         # Create a reservation marker immediately to prevent other concurrent runs
-        mkdir -p .claudecode-marker
-        cat > .claudecode-marker/marker.json << EOF
+        mkdir -p .LLMcode-marker
+        cat > .LLMcode-marker/marker.json << EOF
         {
           "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
           "repository_id": "${{ github.repository_id }}",
@@ -135,17 +125,17 @@ runs:
           "run_number": "${{ github.run_number }}"
         }
         EOF
-        echo "Created ClaudeCode reservation marker for PR #${{ github.event.pull_request.number }}"
+        echo "Created LLM reservation marker for PR #${{ github.event.pull_request.number }}"
     
-    - name: Save ClaudeCode reservation to cache
-      if: steps.claudecode-check.outputs.enable_claudecode == 'true' && github.event_name == 'pull_request'
+    - name: Save LLMcode reservation to cache
+      if: steps.LLMcode-check.outputs.enable_LLMcode == 'true' && github.event_name == 'pull_request'
       uses: actions/cache/save@v4
       with:
-        path: .claudecode-marker
-        key: claudecode-${{ github.repository_id }}-pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+        path: .LLMcode-marker
+        key: LLMcode-${{ github.repository_id }}-pr-${{ github.event.pull_request.number }}-${{ github.sha }}
     
     - name: Set up Node.js
-      if: steps.claudecode-check.outputs.enable_claudecode == 'true'
+      if: steps.LLMcode-check.outputs.enable_LLMcode == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: '18'
@@ -154,114 +144,112 @@ runs:
       shell: bash
       run: |
         echo "::group::Install Deps"
-        if [ "${{ steps.claudecode-check.outputs.enable_claudecode }}" == "true" ]; then
-          pip install -r ${{ github.action_path }}/claudecode/requirements.txt
-          npm install -g @anthropic-ai/claude-code
+        if [ "${{ steps.LLMcode-check.outputs.enable_LLMcode }}" == "true" ]; then
+          pip install -r ${{ github.action_path }}/LLMcode/requirements.txt
         fi
         sudo apt-get update && sudo apt-get install -y jq
         echo "::endgroup::"
     
-    - name: Run ClaudeCode scan
-      id: claudecode-scan
-      if: steps.claudecode-check.outputs.enable_claudecode == 'true'
+    - name: Run LLMcode scan
+      id: LLMcode-scan
+      if: steps.LLMcode-check.outputs.enable_LLMcode == 'true'
       shell: bash
       env:
         GITHUB_TOKEN: ${{ github.token }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
-        ANTHROPIC_API_KEY: ${{ inputs.claude-api-key }}
-        ENABLE_CLAUDE_FILTERING: 'true' 
+        LLM_API_KEY: ${{ inputs.LLM-api-key }}
+        ENABLE_LLM_FILTERING: 'true' 
         EXCLUDE_DIRECTORIES: ${{ inputs.exclude-directories }}
         FALSE_POSITIVE_FILTERING_INSTRUCTIONS: ${{ inputs.false-positive-filtering-instructions }}
         CUSTOM_SECURITY_SCAN_INSTRUCTIONS: ${{ inputs.custom-security-scan-instructions }}
-        CLAUDE_MODEL: ${{ inputs.claude-model }}
+        LLM_MODEL: ${{ inputs.LLM-model }}
       run: |
-        echo "Running ClaudeCode AI security analysis..."
+        echo "Running LLMcode AI security analysis..."
         echo "----------------------------------------"
         
         # Initialize outputs
         echo "findings_count=0" >> $GITHUB_OUTPUT
-        echo "results_file=claudecode/claudecode-results.json" >> $GITHUB_OUTPUT
+        echo "results_file=LLMcode/LLMcode-results.json" >> $GITHUB_OUTPUT
         
-        # Skip ClaudeCode if not a PR
+        # Skip LLMcode if not a PR
         if [ "${{ github.event_name }}" != "pull_request" ]; then
-          echo "ClaudeCode only runs on pull requests, skipping"
+          echo "LLMcode only runs on pull requests, skipping"
           exit 0
         fi
                 
         # Set timeout
-        export CLAUDE_TIMEOUT="${{ inputs.claudecode-timeout }}"
+        export LLM_TIMEOUT="${{ inputs.LLMcode-timeout }}"
         
-        # Run ClaudeCode audit with verbose debugging
+        # Run LLMcode audit with verbose debugging
         export REPO_PATH=$(pwd)
         cd ${{ github.action_path }}
         
         # Enable verbose debugging
-        echo "::group::ClaudeCode Environment"
+        echo "::group::LLMcode Environment"
         echo "Current directory: $(pwd)"
         echo "Python version: $(python --version)"
-        echo "Claude CLI version: $(claude --version 2>&1 || echo 'Claude CLI not found')"
-        echo "ANTHROPIC_API_KEY set: $(if [ -n "$ANTHROPIC_API_KEY" ]; then echo 'Yes'; else echo 'No'; fi)"
+        echo "LLM_API_KEY set: $(if [ -n "$LLM_API_KEY" ]; then echo 'Yes'; else echo 'No'; fi)"
         echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
         echo "PR_NUMBER: $PR_NUMBER"
         echo "Python path: $PYTHONPATH"
-        echo "Files in claudecode directory:"
-        ls -la claudecode/
+        echo "Files in LLMcode directory:"
+        ls -la LLMcode/
         echo "::endgroup::"
         
-        echo "::group::ClaudeCode Execution"
-        # Add current directory to Python path so it can find the claudecode module
+        echo "::group::LLMcode Execution"
+        # Add current directory to Python path so it can find the LLMcode module
         export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$(pwd)"
         echo "Updated PYTHONPATH: $PYTHONPATH"
         
-        # Run from the action root directory so Python can find the claudecode module
-        python -u claudecode/github_action_audit.py > claudecode/claudecode-results.json 2>claudecode/claudecode-error.log || CLAUDECODE_EXIT_CODE=$?
+        # Run from the action root directory so Python can find the LLMcode module
+        python -u LLMcode/github_action_audit.py > LLMcode/LLMcode-results.json 2>LLMcode/LLMcode-error.log || LLMCODE_EXIT_CODE=$?
         
-        if [ -n "$CLAUDECODE_EXIT_CODE" ]; then
-          echo "::warning::ClaudeCode exited with code $CLAUDECODE_EXIT_CODE"
+        if [ -n "$LLMCODE_EXIT_CODE" ]; then
+          echo "::warning::LLMcode exited with code $LLMCODE_EXIT_CODE"
         else
-          echo "ClaudeCode scan completed successfully"
+          echo "LLMcode scan completed successfully"
         fi
         
-        # Parse ClaudeCode results and count findings regardless of exit code
-        if [ -f claudecode/claudecode-results.json ]; then
-          FILE_SIZE=$(wc -c < claudecode/claudecode-results.json)
-          echo "ClaudeCode results file size: $FILE_SIZE bytes"
+        # Parse LLMcode results and count findings regardless of exit code
+        if [ -f LLMcode/LLMcode-results.json ]; then
+          FILE_SIZE=$(wc -c < LLMcode/LLMcode-results.json)
+          echo "LLMcode results file size: $FILE_SIZE bytes"
           
           # Check if file is empty or too small
           if [ "$FILE_SIZE" -lt 2 ]; then
-            echo "::warning::ClaudeCode results file is empty or invalid (size: $FILE_SIZE bytes)"
-            echo "::warning::ClaudeCode may have failed silently. Check claudecode-error.log"
-            if [ -f claudecode/claudecode-error.log ]; then
+            echo "::warning::LLMcode results file is empty or invalid (size: $FILE_SIZE bytes)"
+            echo "::warning::LLMcode may have failed silently. Check LLMcode-error.log"
+            if [ -f LLMcode/LLMcode-error.log ]; then
               echo "Error log contents:"
-              cat claudecode/claudecode-error.log
+              cat LLMcode/LLMcode-error.log
             fi
             echo "findings_count=0" >> $GITHUB_OUTPUT
           else
-            echo "ClaudeCode results preview:"
-            head -n 300 claudecode/claudecode-results.json || echo "Unable to preview results"
+            echo "LLMcode results preview:"
+            head -n 300 LLMcode/LLMcode-results.json || echo "Unable to preview results"
                         
             # Check if the result is an error
-            if jq -e '.error' claudecode/claudecode-results.json > /dev/null 2>&1; then
-              ERROR_MSG=$(jq -r '.error' claudecode/claudecode-results.json)
-              echo "::warning::ClaudeCode error: $ERROR_MSG"
+            if jq -e '.error' LLMcode/LLMcode-results.json > /dev/null 2>&1; then
+              ERROR_MSG=$(jq -r '.error' LLMcode/LLMcode-results.json)
+              echo "::warning::LLMcode error: $ERROR_MSG"
               echo "findings_count=0" >> $GITHUB_OUTPUT
             else
               # Use -r to get raw output and handle potential null/missing findings array
-              CLAUDECODE_FINDINGS_COUNT=$(jq -r '.findings | if . == null then 0 else length end' claudecode/claudecode-results.json 2>/dev/null || echo "0")
-              echo "::debug::Extracted ClaudeCode findings count: $CLAUDECODE_FINDINGS_COUNT"
-              echo "findings_count=$CLAUDECODE_FINDINGS_COUNT" >> $GITHUB_OUTPUT
-              echo "ClaudeCode found $CLAUDECODE_FINDINGS_COUNT security issues"
+              LLMCODE_FINDINGS_COUNT=$(jq -r '.findings | if . == null then 0 else length end' LLMcode/LLMcode-results.json 2>/dev/null || echo "0")
+              echo "::debug::Extracted LLMcode findings count: $LLMCODE_FINDINGS_COUNT"
+              echo "findings_count=$LLMCODE_FINDINGS_COUNT" >> $GITHUB_OUTPUT
+              echo "LLMcode found $LLMCODE_FINDINGS_COUNT security issues"
               
               # Also create findings.json for PR comment script
-              jq '.findings // []' claudecode/claudecode-results.json > findings.json || echo '[]' > findings.json
+              jq '.findings // []' LLMcode/LLMcode-results.json > findings.json || echo '[]' > findings.json
             fi
           fi
         else
-          echo "::warning::ClaudeCode results file not found"
-          if [ -f claudecode/claudecode-error.log ]; then
+          echo "::warning::LLMcode results file not found"
+          if [ -f LLMcode/LLMcode-error.log ]; then
             echo "Error log contents:"
-            cat claudecode/claudecode-error.log
+            cat LLMcode/LLMcode-error.log
           fi
           echo "findings_count=0" >> $GITHUB_OUTPUT
         fi
@@ -271,11 +259,11 @@ runs:
         if [ -f findings.json ]; then
           cp findings.json ${{ github.workspace }}/findings.json || true
         fi
-        if [ -f claudecode/claudecode-results.json ]; then
-          cp claudecode/claudecode-results.json ${{ github.workspace }}/claudecode-results.json || true
+        if [ -f LLMcode/LLMcode-results.json ]; then
+          cp LLMcode/LLMcode-results.json ${{ github.workspace }}/LLMcode-results.json || true
         fi
-        if [ -f claudecode/claudecode-error.log ]; then
-          cp claudecode/claudecode-error.log ${{ github.workspace }}/claudecode-error.log || true
+        if [ -f LLMcode/LLMcode-error.log ]; then
+          cp LLMcode/LLMcode-error.log ${{ github.workspace }}/LLMcode-error.log || true
         fi
         
         echo "::endgroup::"
@@ -288,18 +276,18 @@ runs:
         name: security-review-results
         path: |
           findings.json
-          claudecode-results.json
-          claudecode-error.log
+          LLMcode-results.json
+          LLMcode-error.log
         retention-days: 7
         if-no-files-found: ignore
     
     - name: Comment PR with findings
-      if: github.event_name == 'pull_request' && inputs.comment-pr == 'true' && steps.claudecode-check.outputs.enable_claudecode == 'true'
+      if: github.event_name == 'pull_request' && inputs.comment-pr == 'true' && steps.LLMcode-check.outputs.enable_LLMcode == 'true'
       shell: bash
       env:
         GITHUB_TOKEN: ${{ github.token }}
-        CLAUDECODE_FINDINGS: ${{ steps.claudecode-scan.outputs.findings_count }}
-        SILENCE_CLAUDECODE_COMMENTS: ${{ steps.claudecode-check.outputs.silence_claudecode_comments }}
+        LLMCODE_FINDINGS: ${{ steps.LLMcode-scan.outputs.findings_count }}
+        SILENCE_LLMCODE_COMMENTS: ${{ steps.LLMcode-check.outputs.silence_LLMcode_comments }}
       run: |
         node ${{ github.action_path }}/scripts/comment-pr-findings.js
 

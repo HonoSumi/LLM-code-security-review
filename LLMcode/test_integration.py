@@ -19,7 +19,7 @@ class TestClaudeCodeAudit:
     
     def test_missing_environment_variables(self, monkeypatch, capsys):
         """Test behavior with missing environment variables."""
-        from claudecode import github_action_audit
+        from LLMcode import github_action_audit
         
         # Test missing GITHUB_REPOSITORY
         monkeypatch.delenv('GITHUB_REPOSITORY', raising=False)
@@ -42,7 +42,7 @@ class TestClaudeCodeAudit:
     
     def test_invalid_pr_number(self, monkeypatch, capsys):
         """Test behavior with invalid PR number."""
-        from claudecode  import github_action_audit
+        from LLMcode  import github_action_audit
         
         monkeypatch.setenv('GITHUB_REPOSITORY', 'test/repo')
         monkeypatch.setenv('PR_NUMBER', 'invalid')
@@ -61,7 +61,7 @@ class TestEnvironmentSetup:
     
     def test_anthropic_api_key_handling(self, monkeypatch):
         """Test handling of Anthropic API key."""
-        from claudecode.github_action_audit import SimpleClaudeRunner
+        from LLMcode.github_action_audit import SimpleClaudeRunner
         
         runner = SimpleClaudeRunner()
         
@@ -85,7 +85,7 @@ class TestFilteringIntegration:
     
     def test_full_filter_with_llm_disabled(self):
         """Test FindingsFilter with LLM filtering disabled."""
-        from claudecode.findings_filter import FindingsFilter
+        from LLMcode.findings_filter import FindingsFilter
         
         # Create filter with LLM disabled
         filter_instance = FindingsFilter(

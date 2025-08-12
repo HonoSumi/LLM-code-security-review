@@ -1,6 +1,6 @@
 """Unit tests for the prompts module."""
 
-from claudecode.prompts import get_security_audit_prompt
+from LLMcode.prompts import get_security_audit_prompt
 
 
 class TestPrompts:

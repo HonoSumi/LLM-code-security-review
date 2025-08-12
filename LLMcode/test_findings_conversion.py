@@ -6,8 +6,8 @@ Unit tests for findings conversion and edge cases.
 import pytest
 import json
 
-from claudecode.findings_filter import FindingsFilter, HardExclusionRules
-from claudecode.json_parser import parse_json_with_fallbacks, extract_json_from_text
+from LLMcode.findings_filter import FindingsFilter, HardExclusionRules
+from LLMcode.json_parser import parse_json_with_fallbacks, extract_json_from_text
 
 
 def create_simple_filter():

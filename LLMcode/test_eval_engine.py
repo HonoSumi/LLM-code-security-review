@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 import json
 
-from claudecode.evals.eval_engine import (
+from LLMcode.evals.eval_engine import (
     EvaluationEngine, EvalResult, EvalCase, run_single_evaluation
 )
 

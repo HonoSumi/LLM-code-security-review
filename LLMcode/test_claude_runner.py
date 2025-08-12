@@ -9,8 +9,8 @@ import subprocess
 from unittest.mock import Mock, patch
 from pathlib import Path
 
-from claudecode.github_action_audit import SimpleClaudeRunner
-from claudecode.constants import DEFAULT_CLAUDE_MODEL
+from LLMcode.github_action_audit import SimpleClaudeRunner
+from LLMcode.constants import DEFAULT_CLAUDE_MODEL
 
 
 class TestSimpleClaudeRunner:

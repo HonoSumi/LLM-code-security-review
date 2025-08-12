@@ -7,7 +7,7 @@ import pytest
 import os
 from unittest.mock import Mock, patch
 
-from claudecode.github_action_audit import GitHubActionClient
+from LLMcode.github_action_audit import GitHubActionClient
 
 
 class TestGitHubActionClient:

@@ -6,17 +6,17 @@ security analysis of GitHub pull requests.
 """
 
 __version__ = "1.0.0"
-__author__ = "Anthropic Security Team"
+__author__ = "HonoSumi"
 
 # Import main components for easier access
-from claudecode.github_action_audit import (
+from LLMcode.github_action_audit import (
     GitHubActionClient,
-    SimpleClaudeRunner,
+    SimpleLLMRunner,
     main
 )
 
 __all__ = [
     "GitHubActionClient",
-    "SimpleClaudeRunner",
+    "SimpleLLMRunner",
     "main"
 ]

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Simplified PR Security Audit for GitHub Actions
-Runs Claude Code security audit on current working directory and outputs findings to stdout
+Runs LLM Code security audit on current working directory and outputs findings to stdout
 """
 
 import os
@@ -15,17 +15,18 @@ import re
 import time 
 
 # Import existing components we can reuse
-from claudecode.prompts import get_security_audit_prompt
-from claudecode.findings_filter import FindingsFilter
-from claudecode.json_parser import parse_json_with_fallbacks
-from claudecode.constants import (
+from LLMcode.LLM_call import LLM_call
+from LLMcode.prompts import get_security_audit_prompt
+from LLMcode.findings_filter import FindingsFilter
+from LLMcode.json_parser import parse_json_with_fallbacks
+from LLMcode.constants import (
     EXIT_CONFIGURATION_ERROR,
-    DEFAULT_CLAUDE_MODEL,
     EXIT_SUCCESS,
     EXIT_GENERAL_ERROR,
-    SUBPROCESS_TIMEOUT
+    SUBPROCESS_TIMEOUT,
+    PROMPT_TOKEN_LIMIT
 )
-from claudecode.logger import get_logger
+from LLMcode.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -186,22 +187,24 @@ class GitHubActionClient:
         return ''.join(filtered_sections)
 
 
-class SimpleClaudeRunner:
-    """Simplified Claude Code runner for GitHub Actions."""
+class SimpleLLMRunner:
+    """Simplified LLM runner for GitHub Actions."""
     
     def __init__(self, timeout_minutes: Optional[int] = None):
-        """Initialize Claude runner.
+        """Initialize LLM runner.
         
         Args:
-            timeout_minutes: Timeout for Claude execution (defaults to SUBPROCESS_TIMEOUT)
+            timeout_minutes: Timeout for LLM execution (defaults to SUBPROCESS_TIMEOUT)
         """
         if timeout_minutes is not None:
             self.timeout_seconds = timeout_minutes * 60
         else:
             self.timeout_seconds = SUBPROCESS_TIMEOUT
     
+    
+
     def run_security_audit(self, repo_dir: Path, prompt: str) -> Tuple[bool, str, Dict[str, Any]]:
-        """Run Claude Code security audit.
+        """Run LLM security audit using HTTP API.
         
         Args:
             repo_dir: Path to repository directory
@@ -219,82 +222,57 @@ class SimpleClaudeRunner:
             print(f"[Warning] Large prompt size: {prompt_size / 1024 / 1024:.2f}MB", file=sys.stderr)
         
         try:
-            # Construct Claude Code command
-            # Use stdin for prompt to avoid "argument list too long" error
-            cmd = [
-                'claude',
-                '--output-format', 'json',
-                '--model', DEFAULT_CLAUDE_MODEL
-            ]
-            
-            # Run Claude Code with retry logic
             NUM_RETRIES = 3
             for attempt in range(NUM_RETRIES):
-                result = subprocess.run(
-                    cmd,
-                    input=prompt,  # Pass prompt via stdin
-                    cwd=repo_dir,
-                    capture_output=True,
-                    text=True,
-                    timeout=self.timeout_seconds
-                )
+                response = LLM_call(prompt, '')
                 
-                if result.returncode != 0:
+                if response.status_code != 200:
                     if attempt == NUM_RETRIES - 1:
-                        error_details = f"Claude Code execution failed with return code {result.returncode}\n"
-                        error_details += f"Stderr: {result.stderr}\n"
-                        error_details += f"Stdout: {result.stdout[:500]}..."  # First 500 chars
+                        error_details = f"LLM API request failed with status {response.status_code}\n"
+                        error_details += f"Response: {response.text[:500]}..."  # First 500 chars
                         return False, error_details, {}
                     else:
                         time.sleep(5*attempt)
-                        # Note: We don't do exponential backoff here to keep the runtime reasonable
                         continue  # Retry
+                
+                # Parse JSON response
+                response_data = response.json()
+                
+                # Check for "Prompt is too long" error
+                # if response_data.get('error', {}).get('type') == 'invalid_request_error' and \
+                #    'prompt is too long' in response_data.get('error', {}).get('message', '').lower():
+                #     return False, "PROMPT_TOO_LONG", {}
                 
                 # Parse JSON output
-                success, parsed_result = parse_json_with_fallbacks(result.stdout, "Claude Code output")
+                success, parsed_result = parse_json_with_fallbacks(response_data.get('choices', '')[0].get('message','').get('content',''), "LLM API output")
                 
                 if success:
-                    # Check for "Prompt is too long" error that should trigger retry without diff
-                    if (isinstance(parsed_result, dict) and 
-                        parsed_result.get('type') == 'result' and 
-                        parsed_result.get('subtype') == 'success' and
-                        parsed_result.get('is_error') and
-                        parsed_result.get('result') == 'Prompt is too long'):
-                        return False, "PROMPT_TOO_LONG", {}
-                    
-                    # Check for error_during_execution that should trigger retry
-                    if (isinstance(parsed_result, dict) and 
-                        parsed_result.get('type') == 'result' and 
-                        parsed_result.get('subtype') == 'error_during_execution' and
-                        attempt == 0):
-                        continue  # Retry
-                    
                     # Extract security findings
                     parsed_results = self._extract_security_findings(parsed_result)
                     return True, "", parsed_results
                 else:
-                    if attempt == 0:
-                        continue  # Retry once
-                    else:
-                        return False, "Failed to parse Claude output", {}
+                    if attempt == NUM_RETRIES - 1:
+                        return False, f"Failed to parse LLM output: {response_data.get('choices', '')[0].get('message','').get('content','')[:500]}", {}
+                    time.sleep(5*attempt)
+                    continue  # Retry
             
-            return False, "Unexpected error in retry logic", {}
-            
-        except subprocess.TimeoutExpired:
-            return False, f"Claude Code execution timed out after {self.timeout_seconds // 60} minutes", {}
+        except requests.exceptions.Timeout:
+            return False, f"LLM API request timed out after {self.timeout_seconds} seconds", {}
+        except requests.exceptions.ConnectionError:
+            return False, f"Failed to connect to LLM API at {api_endpoint}", {}
         except Exception as e:
-            return False, f"Claude Code execution error: {str(e)}", {}
+            return False, f"LLM API request failed: {str(e)}", {}
     
-    def _extract_security_findings(self, claude_output: Any) -> Dict[str, Any]:
-        """Extract security findings from Claude's JSON response."""
-        if isinstance(claude_output, dict):
-            # Only accept Claude Code wrapper with result field
+    def _extract_security_findings(self, LLM_output: Any) -> Dict[str, Any]:
+        """Extract security findings from LLM's JSON response."""
+        if isinstance(LLM_output, dict):
+            # Only accept LLM Code wrapper with result field
             # Direct format without wrapper is not supported
-            if 'result' in claude_output:
-                result_text = claude_output['result']
+            if 'result' in LLM_output:
+                result_text = LLM_output['result']
                 if isinstance(result_text, str):
                     # Try to extract JSON from the result text
-                    success, result_json = parse_json_with_fallbacks(result_text, "Claude result text")
+                    success, result_json = parse_json_with_fallbacks(result_text, "LLM result text")
                     if success and result_json and 'findings' in result_json:
                         return result_json
         
@@ -311,36 +289,41 @@ class SimpleClaudeRunner:
         }
     
     
-    def validate_claude_available(self) -> Tuple[bool, str]:
-        """Validate that Claude Code is available."""
+    
+    def validate_LLM_available(self) -> Tuple[bool, str]:
+        """Validate that LLM is available via HTTP request."""
         try:
-            result = subprocess.run(
-                ['claude', '--version'],
-                capture_output=True,
-                text=True,
+            # Get API base URL from environment variable (required)
+            base_url = os.environ.get('LLM_API_BASE_URL')
+            if not base_url:
+                return False, "LLM_API_BASE_URL environment variable is not set"
+            
+            api_endpoint = f"{base_url.rstrip('/')}/v1/complete"
+            
+            # Make HTTP GET request to LLM API endpoint
+            headers = {
+                'Authorization': f'Bearer {os.environ.get("ANTHROPIC_API_KEY", "")}',
+                'Content-Type': 'application/json',
+                'X-API-Version': '2023-06-01'
+            }
+            
+            response = requests.get(
+                api_endpoint,
+                headers=headers,
                 timeout=10
             )
             
-            if result.returncode == 0:
-                # Also check if API key is configured
-                api_key = os.environ.get('ANTHROPIC_API_KEY', '')
-                if not api_key:
-                    return False, "ANTHROPIC_API_KEY environment variable is not set"
-                return True, ""
+            if response.status_code == 200:
+                return True, ""  # LLM is available and properly configured
             else:
-                error_msg = f"Claude Code returned exit code {result.returncode}"
-                if result.stderr:
-                    error_msg += f". Stderr: {result.stderr}"
-                if result.stdout:
-                    error_msg += f". Stdout: {result.stdout}"
-                return False, error_msg
+                return False, f"LLM API returned status code {response.status_code}"
                 
-        except subprocess.TimeoutExpired:
-            return False, "Claude Code command timed out"
-        except FileNotFoundError:
-            return False, "Claude Code is not installed or not in PATH"
+        except requests.exceptions.Timeout:
+            return False, "LLM API request timed out after 10 seconds"
+        except requests.exceptions.ConnectionError:
+            return False, "Failed to connect to LLM API"
         except Exception as e:
-            return False, f"Failed to check Claude Code: {str(e)}"
+            return False, f"Failed to check LLM API: {str(e)}"
 
 
 
@@ -371,11 +354,11 @@ def get_environment_config() -> Tuple[str, int]:
     return repo_name, pr_number
 
 
-def initialize_clients() -> Tuple[GitHubActionClient, SimpleClaudeRunner]:
-    """Initialize GitHub and Claude clients.
+def initialize_clients() -> Tuple[GitHubActionClient, SimpleLLMRunner]:
+    """Initialize GitHub and LLM clients.
     
     Returns:
-        Tuple of (github_client, claude_runner)
+        Tuple of (github_client, llm_runner)
         
     Raises:
         ConfigurationError: If client initialization fails
@@ -386,11 +369,11 @@ def initialize_clients() -> Tuple[GitHubActionClient, SimpleClaudeRunner]:
         raise ConfigurationError(f'Failed to initialize GitHub client: {str(e)}')
     
     try:
-        claude_runner = SimpleClaudeRunner()
+        llm_runner = SimpleLLMRunner()
     except Exception as e:
-        raise ConfigurationError(f'Failed to initialize Claude runner: {str(e)}')
+        raise ConfigurationError(f'Failed to initialize LLM runner: {str(e)}')
         
-    return github_client, claude_runner
+    return github_client, llm_runner
 
 
 def initialize_findings_filter(custom_filtering_instructions: Optional[str] = None) -> FindingsFilter:
@@ -406,15 +389,15 @@ def initialize_findings_filter(custom_filtering_instructions: Optional[str] = No
         ConfigurationError: If filter initialization fails
     """
     try:
-        # Check if we should use Claude API filtering
-        use_claude_filtering = os.environ.get('ENABLE_CLAUDE_FILTERING', 'false').lower() == 'true'
-        api_key = os.environ.get('ANTHROPIC_API_KEY')
+        # Check if we should use LLM API filtering
+        use_LLM_filtering = os.environ.get('ENABLE_LLM_FILTERING', 'false').lower() == 'true'
+        api_key = os.environ.get('LLM_API_KEY')
         
-        if use_claude_filtering and api_key:
-            # Use full filtering with Claude API
+        if use_LLM_filtering and api_key:
+            # Use full filtering with LLM API
             return FindingsFilter(
                 use_hard_exclusions=True,
-                use_claude_filtering=True,
+                use_LLM_filtering=True,
                 api_key=api_key,
                 custom_filtering_instructions=custom_filtering_instructions
             )
@@ -422,18 +405,18 @@ def initialize_findings_filter(custom_filtering_instructions: Optional[str] = No
             # Fallback to filtering with hard rules only
             return FindingsFilter(
                 use_hard_exclusions=True,
-                use_claude_filtering=False
+                use_LLM_filtering=False
             )
     except Exception as e:
         raise ConfigurationError(f'Failed to initialize findings filter: {str(e)}')
 
 
 
-def run_security_audit(claude_runner: SimpleClaudeRunner, prompt: str) -> Dict[str, Any]:
-    """Run the security audit with Claude Code.
+def run_security_audit(llm_runner: SimpleLLMRunner, prompt: str) -> Dict[str, Any]:
+    """Run the security audit with LLM.
     
     Args:
-        claude_runner: Claude runner instance
+        llm_runner: LLM runner instance
         prompt: The security audit prompt
         
     Returns:
@@ -445,7 +428,7 @@ def run_security_audit(claude_runner: SimpleClaudeRunner, prompt: str) -> Dict[s
     # Get repo directory from environment or use current directory
     repo_path = os.environ.get('REPO_PATH')
     repo_dir = Path(repo_path) if repo_path else Path.cwd()
-    success, error_msg, results = claude_runner.run_security_audit(repo_dir, prompt)
+    success, error_msg, results = llm_runner.run_security_audit(repo_dir, prompt)
     
     if not success:
         raise AuditError(f'Security audit failed: {error_msg}')
@@ -551,7 +534,7 @@ def main():
         
         # Initialize components
         try:
-            github_client, claude_runner = initialize_clients()
+            github_client, llm_runner = initialize_clients()
         except ConfigurationError as e:
             print(json.dumps({'error': str(e)}))
             sys.exit(EXIT_CONFIGURATION_ERROR)
@@ -563,10 +546,10 @@ def main():
             print(json.dumps({'error': str(e)}))
             sys.exit(EXIT_CONFIGURATION_ERROR)
         
-        # Validate Claude Code is available
-        claude_ok, claude_error = claude_runner.validate_claude_available()
-        if not claude_ok:
-            print(json.dumps({'error': f'Claude Code not available: {claude_error}'}))
+        # Validate LLM is available
+        llm_ok, llm_error = llm_runner.validate_LLM_available()
+        if not llm_ok:
+            print(json.dumps({'error': f'LLM not available: {llm_error}'}))
             sys.exit(EXIT_GENERAL_ERROR)
         
         # Get PR data
@@ -580,18 +563,18 @@ def main():
         # Generate security audit prompt
         prompt = get_security_audit_prompt(pr_data, pr_diff, custom_scan_instructions=custom_scan_instructions)
         
-        # Run Claude Code security audit
+        # Run LLM security audit
         # Get repo directory from environment or use current directory
         repo_path = os.environ.get('REPO_PATH')
         repo_dir = Path(repo_path) if repo_path else Path.cwd()
-        success, error_msg, results = claude_runner.run_security_audit(repo_dir, prompt)
+        success, error_msg, results = llm_runner.run_security_audit(repo_dir, prompt)
         
         # If prompt is too long, retry without diff
         if not success and error_msg == "PROMPT_TOO_LONG":
             print(f"[Info] Prompt too long, retrying without diff. Original prompt length: {len(prompt)} characters", file=sys.stderr)
             prompt_without_diff = get_security_audit_prompt(pr_data, pr_diff, include_diff=False, custom_scan_instructions=custom_scan_instructions)
             print(f"[Info] New prompt length: {len(prompt_without_diff)} characters", file=sys.stderr)
-            success, error_msg, results = claude_runner.run_security_audit(repo_dir, prompt_without_diff)
+            success, error_msg, results = llm_runner.run_security_audit(repo_dir, prompt_without_diff)
         
         if not success:
             print(json.dumps({'error': f'Security audit failed: {error_msg}'}))

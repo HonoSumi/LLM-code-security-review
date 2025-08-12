@@ -10,7 +10,7 @@ import tempfile
 from unittest.mock import Mock, patch
 from pathlib import Path
 
-from claudecode.github_action_audit import main
+from LLMcode.github_action_audit import main
 
 
 class TestFullWorkflowIntegration:

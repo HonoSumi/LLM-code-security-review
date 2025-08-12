@@ -9,7 +9,7 @@ class TestImports:
     
     def test_main_module_import(self):
         """Test that the main module can be imported."""
-        from claudecode import github_action_audit
+        from LLMcode import github_action_audit
         assert hasattr(github_action_audit, 'GitHubActionClient')
         assert hasattr(github_action_audit, 'SimpleClaudeRunner')
         # SimpleFindingsFilter was removed
@@ -17,8 +17,8 @@ class TestImports:
     
     def test_component_imports(self):
         """Test that all component modules can be imported."""
-        from claudecode.prompts import get_security_audit_prompt
-        from claudecode.json_parser import parse_json_with_fallbacks, extract_json_from_text
+        from LLMcode.prompts import get_security_audit_prompt
+        from LLMcode.json_parser import parse_json_with_fallbacks, extract_json_from_text
         
         # Verify they're callable/usable
         assert callable(get_security_audit_prompt)
@@ -31,7 +31,7 @@ class TestHardExclusionRules:
     
     def test_dos_patterns(self):
         """Test DOS pattern exclusions."""
-        from claudecode.findings_filter import HardExclusionRules
+        from LLMcode.findings_filter import HardExclusionRules
         
         dos_findings = [
             {'description': 'Potential denial of service vulnerability'},
@@ -46,7 +46,7 @@ class TestHardExclusionRules:
     
     def test_rate_limiting_patterns(self):
         """Test rate limiting pattern exclusions."""
-        from claudecode.findings_filter import HardExclusionRules
+        from LLMcode.findings_filter import HardExclusionRules
         
         rate_limit_findings = [
             {'description': 'Missing rate limiting on endpoint'},
@@ -61,7 +61,7 @@ class TestHardExclusionRules:
     
     def test_open_redirect_patterns(self):
         """Test open redirect pattern exclusions."""
-        from claudecode.findings_filter import HardExclusionRules
+        from LLMcode.findings_filter import HardExclusionRules
         
         redirect_findings = [
             {'description': 'Open redirect vulnerability found'},
@@ -76,7 +76,7 @@ class TestHardExclusionRules:
     
     def test_markdown_file_exclusion(self):
         """Test that findings in .md files are excluded."""
-        from claudecode.findings_filter import HardExclusionRules
+        from LLMcode.findings_filter import HardExclusionRules
         
         md_findings = [
             {'file': 'README.md', 'description': 'SQL injection vulnerability'},
@@ -92,7 +92,7 @@ class TestHardExclusionRules:
     
     def test_non_markdown_files_not_excluded(self):
         """Test that findings in non-.md files are not excluded due to file extension."""
-        from claudecode.findings_filter import HardExclusionRules
+        from LLMcode.findings_filter import HardExclusionRules
         
         non_md_findings = [
             {'file': 'main.py', 'description': 'SQL injection vulnerability'},
@@ -112,7 +112,7 @@ class TestHardExclusionRules:
     
     def test_keeps_real_vulnerabilities(self):
         """Test that real vulnerabilities are not excluded."""
-        from claudecode.findings_filter import HardExclusionRules
+        from LLMcode.findings_filter import HardExclusionRules
         
         real_vulns = [
             {'file': 'auth.py', 'description': 'SQL injection in user authentication'},
@@ -131,7 +131,7 @@ class TestJSONParser:
     
     def test_parse_valid_json(self):
         """Test parsing valid JSON."""
-        from claudecode.json_parser import parse_json_with_fallbacks
+        from LLMcode.json_parser import parse_json_with_fallbacks
         
         valid_json = '{"test": "data", "number": 123}'
         success, result = parse_json_with_fallbacks(valid_json, "test")
@@ -141,7 +141,7 @@ class TestJSONParser:
     
     def test_parse_invalid_json(self):
         """Test parsing invalid JSON."""
-        from claudecode.json_parser import parse_json_with_fallbacks
+        from LLMcode.json_parser import parse_json_with_fallbacks
         
         invalid_json = '{invalid json}'
         success, result = parse_json_with_fallbacks(invalid_json, "test")
@@ -152,7 +152,7 @@ class TestJSONParser:
     
     def test_extract_json_from_text(self):
         """Test extracting JSON from mixed text."""
-        from claudecode.json_parser import extract_json_from_text
+        from LLMcode.json_parser import extract_json_from_text
         
         mixed_text = 'Some text before {"key": "value"} some text after'
         result = extract_json_from_text(mixed_text)
@@ -161,7 +161,7 @@ class TestJSONParser:
     
     def test_extract_json_from_text_no_json(self):
         """Test extracting JSON when none exists."""
-        from claudecode.json_parser import extract_json_from_text
+        from LLMcode.json_parser import extract_json_from_text
         
         plain_text = 'This is just plain text with no JSON'
         result = extract_json_from_text(plain_text)
@@ -174,7 +174,7 @@ class TestPromptsModule:
     
     def test_get_security_audit_prompt(self):
         """Test security audit prompt generation."""
-        from claudecode.prompts import get_security_audit_prompt
+        from LLMcode.prompts import get_security_audit_prompt
         
         pr_data = {
             'number': 123,

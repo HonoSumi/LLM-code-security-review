@@ -5,7 +5,7 @@ import os
 from unittest.mock import patch, MagicMock
 
 
-from claudecode.github_action_audit import (
+from LLMcode.github_action_audit import (
     get_environment_config,
     initialize_clients,
     initialize_findings_filter,
@@ -14,7 +14,7 @@ from claudecode.github_action_audit import (
     ConfigurationError,
     AuditError
 )
-from claudecode.findings_filter import FindingsFilter
+from LLMcode.findings_filter import FindingsFilter
 
 
 class TestHelperFunctions:
