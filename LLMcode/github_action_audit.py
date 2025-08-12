@@ -224,19 +224,16 @@ class SimpleLLMRunner:
         try:
             NUM_RETRIES = 3
             for attempt in range(NUM_RETRIES):
-                response = LLM_call(prompt, '')
+                status_code, response_text = LLM_call(prompt, '')
                 
-                if response.status_code != 200:
+                if status_code != 200:
                     if attempt == NUM_RETRIES - 1:
-                        error_details = f"LLM API request failed with status {response.status_code}\n"
-                        error_details += f"Response: {response.text[:500]}..."  # First 500 chars
+                        error_details = f"LLM API request failed with status {status_code}\n"
+                        error_details += f"Response: {response_text}..."  # First 500 chars
                         return False, error_details, {}
                     else:
                         time.sleep(5*attempt)
                         continue  # Retry
-                
-                # Parse JSON response
-                response_data = response.json()
                 
                 # Check for "Prompt is too long" error
                 # if response_data.get('error', {}).get('type') == 'invalid_request_error' and \
@@ -244,7 +241,7 @@ class SimpleLLMRunner:
                 #     return False, "PROMPT_TOO_LONG", {}
                 
                 # Parse JSON output
-                success, parsed_result = parse_json_with_fallbacks(response_data.get('choices', '')[0].get('message','').get('content',''), "LLM API output")
+                success, parsed_result = parse_json_with_fallbacks(response_text, "LLM API output")
                 
                 if success:
                     # Extract security findings
@@ -294,9 +291,9 @@ class SimpleLLMRunner:
         """Validate that LLM is available via HTTP request."""
         try:
             # Get API base URL from environment variable (required)
-            base_url = os.environ.get('LLM_API_BASE_URL')
-            if not base_url:
-                return False, "LLM_API_BASE_URL environment variable is not set"
+            # base_url = os.environ.get('LLM_API_BASE_URL')
+            # if not base_url:
+            #     return False, "LLM_API_BASE_URL environment variable is not set"
             
             api_endpoint = f"{base_url.rstrip('/')}/v1/complete"
             

@@ -55,9 +55,9 @@ class LLMAPIClient:
             Tuple of (success, error_message)
         """
         try:
-            response = LLM_call("hi", '', 10)
-            if response.status_code != 200:
-                return False, f"LLM verify failed: {response.text}"
+            status_code, response_text = LLM_call("hi", '', 10)
+            if status_code != 200:
+                return False, f"LLM verify failed: {response_text}"
             return True, ""
         except Exception as e:
             error_msg = str(e)
@@ -92,12 +92,11 @@ class LLMAPIClient:
                 if not system_prompt:
                     system_prompt = ""
                 start_time = time.time()
-                response = LLM_call(prompt, system_prompt, max_tokens)
+                status_code, response_text = LLM_call(prompt, system_prompt, max_tokens)
                 duration = time.time() - start_time
                 
                 # Extract text from response
-                response_data = response.json()
-                response_text = response_data.get('choices', [])[0].get('message', {}).get('content','')
+                
                 
                 logger.info(f"LLM API call successful in {duration:.1f}s")
                 return True, response_text, ""

@@ -55,4 +55,6 @@ def LLM_call(prompt: str = "", system_prompt: str = "", max_tokens: int = PROMPT
             data=payload,
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
-        return response
+        response_data = response.json()
+        response_text = response_data.get('choices', [])[0].get('message', {}).get('content','')
+        return response.status_code, response_text
