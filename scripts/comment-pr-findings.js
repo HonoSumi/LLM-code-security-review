@@ -143,7 +143,7 @@ async function run() {
       let commentBody = `🤖 **Security Issue: ${message}**\n\n`;
       commentBody += `**Severity:** ${severity}\n`;
       commentBody += `**Category:** ${category}\n`;
-      commentBody += `**Tool:** ClaudeCode AI Security Analysis\n`;
+      commentBody += `**Tool:** LLM AI Security Analysis\n`;
       
       // Add exploit scenario if available
       if (finding.exploit_scenario || (finding.extra && finding.extra.metadata && finding.extra.metadata.exploit_scenario)) {

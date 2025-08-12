@@ -537,6 +537,7 @@ def main():
         # Generate security audit prompt
         prompt = get_security_audit_prompt(pr_data, pr_diff, custom_scan_instructions=custom_scan_instructions)
         
+        print(f"[info] prompt is:{prompt}", file=sys.stderr)
         # Run LLM security audit
         # Get repo directory from environment or use current directory
         repo_path = os.environ.get('REPO_PATH')
