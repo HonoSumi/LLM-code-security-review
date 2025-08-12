@@ -23,8 +23,7 @@ from LLMcode.constants import (
     EXIT_CONFIGURATION_ERROR,
     EXIT_SUCCESS,
     EXIT_GENERAL_ERROR,
-    SUBPROCESS_TIMEOUT,
-    PROMPT_TOKEN_LIMIT
+    SUBPROCESS_TIMEOUT
 )
 from LLMcode.logger import get_logger
 
@@ -249,14 +248,12 @@ class SimpleLLMRunner:
                     return True, "", parsed_results
                 else:
                     if attempt == NUM_RETRIES - 1:
-                        return False, f"Failed to parse LLM output: {response_data.get('choices', '')[0].get('message','').get('content','')[:500]}", {}
+                        return False, f"Failed to parse LLM output: {parsed_result[:500]}", {}
                     time.sleep(5*attempt)
                     continue  # Retry
             
         except requests.exceptions.Timeout:
             return False, f"LLM API request timed out after {self.timeout_seconds} seconds", {}
-        except requests.exceptions.ConnectionError:
-            return False, f"Failed to connect to LLM API at {api_endpoint}", {}
         except Exception as e:
             return False, f"LLM API request failed: {str(e)}", {}
     
@@ -290,30 +287,12 @@ class SimpleLLMRunner:
     def validate_LLM_available(self) -> Tuple[bool, str]:
         """Validate that LLM is available via HTTP request."""
         try:
-            # Get API base URL from environment variable (required)
-            # base_url = os.environ.get('LLM_API_BASE_URL')
-            # if not base_url:
-            #     return False, "LLM_API_BASE_URL environment variable is not set"
+            status_code, response_text = LLM_call('hi', '', 10)
             
-            api_endpoint = f"{base_url.rstrip('/')}/v1/complete"
-            
-            # Make HTTP GET request to LLM API endpoint
-            headers = {
-                'Authorization': f'Bearer {os.environ.get("ANTHROPIC_API_KEY", "")}',
-                'Content-Type': 'application/json',
-                'X-API-Version': '2023-06-01'
-            }
-            
-            response = requests.get(
-                api_endpoint,
-                headers=headers,
-                timeout=10
-            )
-            
-            if response.status_code == 200:
+            if status_code == 200:
                 return True, ""  # LLM is available and properly configured
             else:
-                return False, f"LLM API returned status code {response.status_code}"
+                return False, f"LLM API returned status code {status_code}"
                 
         except requests.exceptions.Timeout:
             return False, "LLM API request timed out after 10 seconds"
