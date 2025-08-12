@@ -128,26 +128,24 @@ REQUIRED OUTPUT FORMAT:
 You MUST output your findings as structured JSON with this exact schema:
 
 {{
-  "result":{{
-    "findings": [
-      {{
-        "file": "path/to/file.py",
-        "line": 42,
-        "severity": "HIGH",
-        "category": "sql_injection",
-        "description": "User input passed to SQL query without parameterization",
-        "exploit_scenario": "Attacker could extract database contents by manipulating the 'search' parameter with SQL injection payloads like '1; DROP TABLE users--'",
-        "recommendation": "Replace string formatting with parameterized queries using SQLAlchemy or equivalent",
-        "confidence": 0.95
-      }}
-    ],
-    "analysis_summary": {{
-      "files_reviewed": 8,
-      "high_severity": 1,
-      "medium_severity": 0,
-      "low_severity": 0,
-      "review_completed": true,
+  "findings": [
+    {{
+      "file": "path/to/file.py",
+      "line": 42,
+      "severity": "HIGH",
+      "category": "sql_injection",
+      "description": "User input passed to SQL query without parameterization",
+      "exploit_scenario": "Attacker could extract database contents by manipulating the 'search' parameter with SQL injection payloads like '1; DROP TABLE users--'",
+      "recommendation": "Replace string formatting with parameterized queries using SQLAlchemy or equivalent",
+      "confidence": 0.95
     }}
+  ],
+  "analysis_summary": {{
+    "files_reviewed": 8,
+    "high_severity": 1,
+    "medium_severity": 0,
+    "low_severity": 0,
+    "review_completed": true,
   }}
 }}
 

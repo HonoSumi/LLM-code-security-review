@@ -244,8 +244,8 @@ class SimpleLLMRunner:
                 
                 if success:
                     # Extract security findings
-                    parsed_results = self._extract_security_findings(parsed_result)
-                    return True, "", parsed_results
+                    # parsed_results = self._extract_security_findings(parsed_result)
+                    return True, "", parsed_result
                 else:
                     if attempt == NUM_RETRIES - 1:
                         return False, f"Failed to parse LLM output: {parsed_result[:500]}", {}
@@ -269,8 +269,6 @@ class SimpleLLMRunner:
                     success, result_json = parse_json_with_fallbacks(result_text, "LLM result text")
                     if success and result_json and 'findings' in result_json:
                         return result_json
-        else:
-            print("json parse results is actually not json")
         # Return empty structure if no findings found
         return {
             'findings': [],
