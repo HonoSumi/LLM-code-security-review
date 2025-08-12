@@ -553,7 +553,6 @@ def main():
             print(json.dumps({'error': f'Security audit failed: {error_msg}'}))
             sys.exit(EXIT_GENERAL_ERROR)
         
-        print(f"origin findings from results: {results}")
         # Filter findings to reduce false positives
         original_findings = results.get('findings', [])
         

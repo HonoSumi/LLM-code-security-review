@@ -4,7 +4,7 @@
 import json
 import re
 import logging
-
+import sys
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ def parse_json_with_fallbacks(text, error_context=""):
         # First, try direct JSON parsing
         return True, json.loads(text)
     except json.JSONDecodeError:
-        print("LLM response parse error!")
+        print("LLM response parse error!", file=sys.stderr)
     
     # Try extracting JSON from text
     extracted_json = extract_json_from_text(text)
