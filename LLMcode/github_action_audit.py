@@ -498,7 +498,7 @@ def main():
         # Load custom security scan instructions if provided
         custom_scan_instructions = None
         scan_file = os.environ.get('CUSTOM_SECURITY_SCAN_INSTRUCTIONS', '')
-        print(f"[info] custom scan rule file is: {scan_file}, pwd is {os.getcwd()}", file=sys.stderr)
+        print(f"[info] custom scan rule file is: {scan_file}, pwd is: {os.getcwd()}, files under pwd is: {os.listdir()}", file=sys.stderr)
         if scan_file and Path(scan_file).exists():
             try:
                 with open(scan_file, 'r', encoding='utf-8') as f:
