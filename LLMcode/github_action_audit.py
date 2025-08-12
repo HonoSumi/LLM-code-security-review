@@ -505,7 +505,8 @@ def main():
                     logger.info(f"Loaded custom security scan instructions from {scan_file}")
             except Exception as e:
                 logger.warning(f"Failed to read security scan instructions file {scan_file}: {e}")
-        
+        else:
+            print(f"custom scan rule file is not exist, scan_file is: {scan_file}", file=sys.stderr)
         # Initialize components
         try:
             github_client, llm_runner = initialize_clients()
