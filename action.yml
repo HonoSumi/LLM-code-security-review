@@ -242,7 +242,7 @@ runs:
               echo "LLMcode found $LLMCODE_FINDINGS_COUNT security issues"
               
               # Also create findings.json for PR comment script
-              jq '.findings // []' LLMcode/LLMcode-results.json > findings.json || echo '[]' > findings.json
+              jq '.findings // empty' LLMcode/LLMcode-results.json > findings.json || echo '[]' > findings.json
             fi
           fi
         else
