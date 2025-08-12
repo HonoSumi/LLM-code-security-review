@@ -78,7 +78,6 @@ def parse_json_with_fallbacks(text, error_context=""):
     # Try extracting JSON from text
     extracted_json = extract_json_from_text(text)
     if extracted_json:
-        print(f"extracted LLM response JSON is :{extracted_json}")
         return True, extracted_json
     
     # If all parsing failed, return error info
