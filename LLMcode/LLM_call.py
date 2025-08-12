@@ -56,5 +56,7 @@ def LLM_call(prompt: str = "", system_prompt: str = "", max_tokens: int = PROMPT
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
         response_data = response.json()
-        response_text = response_data.get('choices', [])[0].get('message', {}).get('content','')
+        if not response_data.get('choices'):
+            raise ValueError(f"API response missing 'choices' or it's empty, current response: {response.text()}")
+        response_text = response_data['choices'][0].get('message', {}).get('content', '')
         return response.status_code, response_text
