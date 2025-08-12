@@ -498,15 +498,18 @@ def main():
         # Load custom security scan instructions if provided
         custom_scan_instructions = None
         scan_file = os.environ.get('CUSTOM_SECURITY_SCAN_INSTRUCTIONS', '')
+        print(f"[info] custom scan rule file is: {scan_file}", file=sys.stderr)
         if scan_file and Path(scan_file).exists():
             try:
                 with open(scan_file, 'r', encoding='utf-8') as f:
                     custom_scan_instructions = f.read()
+                    print(f"[info] ccustom_scan_instructions is: {custom_scan_instructions}", file=sys.stderr)
                     logger.info(f"Loaded custom security scan instructions from {scan_file}")
             except Exception as e:
+                print(f"[warn] custom scan rule file reading error: {e}", file=sys.stderr)
                 logger.warning(f"Failed to read security scan instructions file {scan_file}: {e}")
         else:
-            print(f"custom scan rule file is not exist, scan_file is: {scan_file}", file=sys.stderr)
+            print(f"[warn] custom scan rule file is not exist, scan_file is: {scan_file}", file=sys.stderr)
         # Initialize components
         try:
             github_client, llm_runner = initialize_clients()
