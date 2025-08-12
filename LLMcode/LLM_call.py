@@ -32,7 +32,7 @@ def LLM_call(prompt: str = "", system_prompt: str = "", max_tokens: int = PROMPT
                 "role": "user"
                 }
             ],
-            "model": "deepseek-chat",
+            "model": "deepseek-reasoner",
             "frequency_penalty": 0,
             "max_tokens": max_tokens,
             "presence_penalty": 0,
