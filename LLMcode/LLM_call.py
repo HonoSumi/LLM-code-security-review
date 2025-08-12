@@ -6,7 +6,7 @@ from LLMcode.constants import (
     DEFAULT_TIMEOUT_SECONDS
 )
 
-def LLM_call(prompt: str = "", system_prompt: str = "", max_tokens: int = PROMPT_TOKEN_LIMIT) -> requests.Response:
+def LLM_call(prompt: str = "", system_prompt: str = "", max_tokens: int = PROMPT_TOKEN_LIMIT) -> tuple[int, str]:
         api_endpoint = f"https://api.deepseek.com/chat/completions"
         api_key = os.environ.get('LLM_API_KEY', '')
             
