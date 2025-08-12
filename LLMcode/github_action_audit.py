@@ -429,7 +429,7 @@ def apply_findings_filter(findings_filter, original_findings: List[Dict[str, Any
     filter_success, filter_results, filter_stats = findings_filter.filter_findings(
         original_findings, pr_context
     )
-    
+    print(f"origin findings are: {original_findings}")
     if filter_success:
         kept_findings = filter_results.get('filtered_findings', [])
         excluded_findings = filter_results.get('excluded_findings', [])
@@ -556,6 +556,7 @@ def main():
             print(json.dumps({'error': f'Security audit failed: {error_msg}'}))
             sys.exit(EXIT_GENERAL_ERROR)
         
+        print(f"origin findings from results: {results}")
         # Filter findings to reduce false positives
         original_findings = results.get('findings', [])
         
