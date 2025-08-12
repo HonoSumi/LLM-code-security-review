@@ -11,7 +11,7 @@ DEFAULT_MAX_RETRIES = 3
 RATE_LIMIT_BACKOFF_MAX = 30  # Maximum backoff time for rate limits
 
 # Token Limits
-PROMPT_TOKEN_LIMIT = 8196  # 16k tokens max for deepseek-chat
+PROMPT_TOKEN_LIMIT = 8192  # 16k tokens max for deepseek-chat
 
 # Exit Codes
 EXIT_SUCCESS = 0
