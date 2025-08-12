@@ -544,7 +544,7 @@ def main():
         repo_path = os.environ.get('REPO_PATH')
         repo_dir = Path(repo_path) if repo_path else Path.cwd()
         success, error_msg, results = llm_runner.run_security_audit(repo_dir, prompt)
-        
+        print(f"run_security_audit exec results: success: {success}, error_msg: {error_msg}, results: {results}")
         # If prompt is too long, retry without diff
         if not success and error_msg == "PROMPT_TOO_LONG":
             print(f"[Info] Prompt too long, retrying without diff. Original prompt length: {len(prompt)} characters", file=sys.stderr)
