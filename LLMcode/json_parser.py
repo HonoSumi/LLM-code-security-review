@@ -73,11 +73,12 @@ def parse_json_with_fallbacks(text, error_context=""):
         # First, try direct JSON parsing
         return True, json.loads(text)
     except json.JSONDecodeError:
-        pass
+        print("LLM response parse error!")
     
     # Try extracting JSON from text
     extracted_json = extract_json_from_text(text)
     if extracted_json:
+        print(f"extracted LLM response JSON is :{extracted_json}")
         return True, extracted_json
     
     # If all parsing failed, return error info
