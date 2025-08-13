@@ -1,6 +1,0 @@
-**SSRF:**
-- Internal service enumeration via URL manipulation
-- Cloud metadata API exploitation (AWS, GCP, Azure)
-- Blind SSRF leading to data exfiltration
-- Protocol smuggling (file://, dict://, gopher://)
-- Bypass of IP whitelisting via DNS rebinding
