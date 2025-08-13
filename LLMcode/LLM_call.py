@@ -11,6 +11,7 @@ from LLMcode.constants import (
 def LLM_call(prompt: str = "", system_prompt: str = "", max_tokens: int = PROMPT_TOKEN_LIMIT) -> tuple[int, str]:
         api_endpoint = f"https://api.deepseek.com/chat/completions"
         api_key = os.environ.get('LLM_API_KEY', '')
+        model = "deepseek-reasoner"
         print("####################### begin LLM request #######################", file=sys.stderr)
         print(f"[info] prompt is:{prompt}", file=sys.stderr)   
         print(f"[info] system_prompt is:{system_prompt}", file=sys.stderr)    
@@ -35,7 +36,7 @@ def LLM_call(prompt: str = "", system_prompt: str = "", max_tokens: int = PROMPT
                 "role": "user"
                 }
             ],
-            "model": "deepseek-chat",
+            "model": model,
             "frequency_penalty": 0,
             "max_tokens": max_tokens,
             "presence_penalty": 0,
@@ -45,7 +46,7 @@ def LLM_call(prompt: str = "", system_prompt: str = "", max_tokens: int = PROMPT
             "stop": None,
             "stream": False,
             "stream_options": None,
-            "temperature": 1,
+            "temperature": 0,
             "top_p": 1,
             "tools": None,
             "tool_choice": "none",
