@@ -1,6 +1,9 @@
+# Key Changes for Claude-code-security-review
+Modify the LLMcode/LLM_call.py to customize your HTTP-based LLM communication.
+
 # LLM Code Security Reviewer
 
-An AI-powered security review GitHub Action using LLM to analyze code changes for security vulnerabilities. This action provides intelligent, context-aware security analysis for pull requests using Anthropic's LLM Code tool for deep semantic security analysis. See our blog post [here](https://www.anthropic.com/news/automate-security-reviews-with-claude-code) for more details.
+An AI-powered security review GitHub Action using LLM to analyze code changes for security vulnerabilities. This action provides intelligent, context-aware security analysis for pull requests using LLM Code tool for deep semantic security analysis. See our blog post [here](https://www.anthropic.com/news/automate-security-reviews-with-claude-code) for more details.
 
 ## Features
 
@@ -46,7 +49,7 @@ jobs:
 
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
-| `LLM-api-key` | Anthropic LLM API key for security analysis | None | Yes |
+| `LLM-api-key` | LLM API key for security analysis | None | Yes |
 | `comment-pr` | Whether to comment on PRs with findings | `true` | No |
 | `upload-results` | Whether to upload results as artifacts | `true` | No |
 | `exclude-directories` | Comma-separated list of directories to exclude from scanning | None | No |
@@ -139,7 +142,7 @@ By default, LLM Code ships a `/security-review` [slash command](https://docs.ant
 
 The default `/security-review` command is designed to work well in most cases, but it can also be customized based on your specific security needs. To do so: 
 
-1. Copy the [`security-review.md`](https://github.com/anthropics/claude-code-security-review/blob/main/.claude/commands/security-review.md?plain=1) file from this repository to your project's `.LLM/commands/` folder. 
+1. Copy the [`security-review.md`](https://github.com/anthropics/claude-code-security-review/blob/main/.claude/commands/security-review.md?plain=1) file from this repository to your project's `.claude/commands/` folder. 
 2. Edit `security-review.md` to customize the security analysis. For example, you could add additional organization-specific directions to the false positive filtering instructions. 
 
 ## Custom Scanning Configuration
