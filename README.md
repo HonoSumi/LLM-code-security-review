@@ -1,10 +1,10 @@
-# Claude Code Security Reviewer
+# LLM Code Security Reviewer
 
-An AI-powered security review GitHub Action using Claude to analyze code changes for security vulnerabilities. This action provides intelligent, context-aware security analysis for pull requests using Anthropic's Claude Code tool for deep semantic security analysis. See our blog post [here](https://www.anthropic.com/news/automate-security-reviews-with-claude-code) for more details.
+An AI-powered security review GitHub Action using LLM to analyze code changes for security vulnerabilities. This action provides intelligent, context-aware security analysis for pull requests using Anthropic's LLM Code tool for deep semantic security analysis. See our blog post [here](https://www.anthropic.com/news/automate-security-reviews-with-claude-code) for more details.
 
 ## Features
 
-- **AI-Powered Analysis**: Uses Claude's advanced reasoning to detect security vulnerabilities with deep semantic understanding
+- **AI-Powered Analysis**: Uses LLM's advanced reasoning to detect security vulnerabilities with deep semantic understanding
 - **Diff-Aware Scanning**: For PRs, only analyzes changed files
 - **PR Comments**: Automatically comments on PRs with security findings
 - **Contextual Understanding**: Goes beyond pattern matching to understand code semantics
@@ -46,12 +46,12 @@ jobs:
 
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
-| `LLM-api-key` | Anthropic Claude API key for security analysis | None | Yes |
+| `LLM-api-key` | Anthropic LLM API key for security analysis | None | Yes |
 | `comment-pr` | Whether to comment on PRs with findings | `true` | No |
 | `upload-results` | Whether to upload results as artifacts | `true` | No |
 | `exclude-directories` | Comma-separated list of directories to exclude from scanning | None | No |
-| `claudecode-timeout` | Timeout for ClaudeCode analysis in minutes | `20` | No |
-| `run-every-commit` | Run ClaudeCode on every commit (skips cache check). Warning: May increase false positives on PRs with many commits. | `false` | No |
+| `LLMcode-timeout` | Timeout for LLMCode analysis in minutes | `20` | No |
+| `run-every-commit` | Run LLMCode on every commit (skips cache check). Warning: May increase false positives on PRs with many commits. | `false` | No |
 | `false-positive-filtering-instructions` | Path to custom false positive filtering instructions text file | None | No |
 | `custom-security-scan-instructions` | Path to custom security scan instructions text file to append to audit prompt | None | No |
 
@@ -67,11 +67,11 @@ jobs:
 ### Architecture
 
 ```
-claudecode/
+LLMcode/
 ├── github_action_audit.py  # Main audit script for GitHub Actions
 ├── prompts.py              # Security audit prompt templates
 ├── findings_filter.py      # False positive filtering logic
-├── claude_api_client.py    # Claude API client for false positive filtering
+├── LLM_api_client.py    # LLM API client for false positive filtering
 ├── json_parser.py          # Robust JSON parsing utilities
 ├── requirements.txt        # Python dependencies
 ├── test_*.py               # Test suites
@@ -80,8 +80,8 @@ claudecode/
 
 ### Workflow
 
-1. **PR Analysis**: When a pull request is opened, Claude analyzes the diff to understand what changed
-2. **Contextual Review**: Claude examines the code changes in context, understanding the purpose and potential security implications
+1. **PR Analysis**: When a pull request is opened, LLM analyzes the diff to understand what changed
+2. **Contextual Review**: LLM examines the code changes in context, understanding the purpose and potential security implications
 3. **Finding Generation**: Security issues are identified with detailed explanations, severity ratings, and remediation guidance
 4. **False Positive Filtering**: Advanced filtering removes low-impact or false positive prone findings to reduce noise
 5. **PR Comments**: Findings are posted as review comments on the specific lines of code
@@ -127,19 +127,19 @@ Follow the Quick Start guide above. The action handles all dependencies automati
 
 ### Local Development
 
-To run the security scanner locally against a specific PR, see the [evaluation framework documentation](claudecode/evals/README.md).
+To run the security scanner locally against a specific PR, see the [evaluation framework documentation](LLMcode/evals/README.md).
 
 <a id="security-review-slash-command"></a>
 
-## Claude Code Integration: /security-review Command 
+## LLM Code Integration: /security-review Command 
 
-By default, Claude Code ships a `/security-review` [slash command](https://docs.anthropic.com/en/docs/claude-code/slash-commands) that provides the same security analysis capabilities as the GitHub Action workflow, but integrated directly into your Claude Code development environment. To use this, simply run `/security-review` to perform a comprehensive security review of all pending changes.
+By default, LLM Code ships a `/security-review` [slash command](https://docs.anthropic.com/en/docs/claude-code/slash-commands) that provides the same security analysis capabilities as the GitHub Action workflow, but integrated directly into your LLM Code development environment. To use this, simply run `/security-review` to perform a comprehensive security review of all pending changes.
 
 ### Customizing the Command
 
 The default `/security-review` command is designed to work well in most cases, but it can also be customized based on your specific security needs. To do so: 
 
-1. Copy the [`security-review.md`](https://github.com/anthropics/claude-code-security-review/blob/main/.claude/commands/security-review.md?plain=1) file from this repository to your project's `.claude/commands/` folder. 
+1. Copy the [`security-review.md`](https://github.com/anthropics/claude-code-security-review/blob/main/.claude/commands/security-review.md?plain=1) file from this repository to your project's `.LLM/commands/` folder. 
 2. Edit `security-review.md` to customize the security analysis. For example, you could add additional organization-specific directions to the false positive filtering instructions. 
 
 ## Custom Scanning Configuration
@@ -164,4 +164,4 @@ For issues or questions:
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+AGPLv3 License - see [LICENSE](LICENSE) file for details.
